@@ -18,8 +18,8 @@ class AppColors {
     '건축':    Color(0xFF365E78),
     '인물':    Color(0xFF5A4A8E),
     '전통문화': Color(0xFFB5392E),
-    '생활문화': Color(0xFFC4A05A),
-    '산업문화': Color(0xFF3F6B4A),
+    '예술문화': Color(0xFFC4A05A),
+    '자연문화': Color(0xFF3F6B4A),
   };
 
   static const catGlyphs = <String, String>{
@@ -27,8 +27,8 @@ class AppColors {
     '건축':    '築',
     '인물':    '人',
     '전통문화': '傳',
-    '생활문화': '活',
-    '산업문화': '業',
+    '예술문화': '藝',
+    '자연문화': '然',
   };
 
   static Color forCategory(String cat) => catColors[cat] ?? accent;
