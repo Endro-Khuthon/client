@@ -54,9 +54,12 @@ class _RootShellState extends State<_RootShell> {
         index: _tab,
         children: _screens,
       ),
-      bottomNavigationBar: _BottomNav(
-        currentIndex: _tab,
-        onTap: (i) => setState(() => _tab = i),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        child: _BottomNav(
+          currentIndex: _tab,
+          onTap: (i) => setState(() => _tab = i),
+        ),
       ),
     );
   }
@@ -69,53 +72,58 @@ class _BottomNav extends StatelessWidget {
   const _BottomNav({required this.currentIndex, required this.onTap});
 
   static const _items = [
-    _NavItem(icon: Icons.map_outlined,        activeIcon: Icons.map,         label: '지도'),
+    _NavItem(icon: Icons.map_outlined,         activeIcon: Icons.map,          label: '지도'),
     _NavItem(icon: Icons.auto_stories_outlined, activeIcon: Icons.auto_stories, label: '도감'),
-    _NavItem(icon: Icons.settings_outlined,   activeIcon: Icons.settings,    label: '설정'),
+    _NavItem(icon: Icons.settings_outlined,    activeIcon: Icons.settings,     label: '설정'),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      height: 64,
+      decoration: BoxDecoration(
         color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.line, width: 0.5)),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 56,
-          child: Row(
-            children: List.generate(_items.length, (i) {
-              final item = _items[i];
-              final isActive = i == currentIndex;
-              return Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => onTap(i),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        isActive ? item.activeIcon : item.icon,
-                        size: 24,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Row(
+          children: List.generate(_items.length, (i) {
+            final item = _items[i];
+            final isActive = i == currentIndex;
+            return Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => onTap(i),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      isActive ? item.activeIcon : item.icon,
+                      size: 24,
+                      color: isActive ? AppColors.accent : AppColors.inkMute,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      item.label,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                         color: isActive ? AppColors.accent : AppColors.inkMute,
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        item.label,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                          color: isActive ? AppColors.accent : AppColors.inkMute,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              );
-            }),
-          ),
+              ),
+            );
+          }),
         ),
       ),
     );
