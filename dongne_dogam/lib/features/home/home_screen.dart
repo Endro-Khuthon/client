@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 
 import '../../core/app_colors.dart';
 import '../../data/models/story_spot.dart';
+import '../../data/repositories/dogam_repository.dart';
 import '../../data/repositories/spot_repository.dart';
 import '../story/story_screen.dart';
 import 'widgets/notification_popup.dart';
@@ -20,12 +21,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _repo = SpotRepository();
+  final _dogamRepo = DogamRepository();
   NaverMapController? _mapController;
 
   String _regionId = 'seongsu';
   List<StorySpot> _spots = [];
   StorySpot? _selectedSpot;
-  final Set<String> _collectedIds = {};
+  Set<String> _collectedIds = {};
   final Map<String, NOverlayImage> _markerIconCache = {};
 
   // 실시간 GPS
@@ -51,8 +53,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _loadCollected();
     _loadSpots();
     _initLocationStream();
+  }
+
+  Future<void> _loadCollected() async {
+    final ids = await _dogamRepo.getCollectedIds();
+    setState(() => _collectedIds = ids);
   }
 
   @override
@@ -205,12 +213,13 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (_) => StoryScreen(
           spot: spot,
           isCollected: _collectedIds.contains(spot.id),
-          onCollect: () {
+          onCollect: () async {
+            await _dogamRepo.collect(spot.id);
             setState(() {
               _collectedIds.add(spot.id);
               _markerIconCache.clear();
             });
-            Navigator.of(context).pop();
+            if (mounted) Navigator.of(context).pop();
             _refreshMarkers();
           },
         ),
@@ -385,11 +394,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(width: 8),
                       GestureDetector(
-                        onTap: () {
+                        onTap: () async {
+                          await _dogamRepo.clearAll();
                           setState(() {
+                            _collectedIds.clear();
                             _notifiedIds.clear();
+                            _markerIconCache.clear();
                             _notifyResetFlash = true;
                           });
+                          _refreshMarkers();
                           Future.delayed(const Duration(milliseconds: 600), () {
                             if (mounted) setState(() => _notifyResetFlash = false);
                           });
