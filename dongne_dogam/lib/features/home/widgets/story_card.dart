@@ -4,7 +4,7 @@ import '../../../core/app_colors.dart';
 import '../../../data/models/story_spot.dart';
 
 class StoryCard extends StatelessWidget {
-  final StorySpot spot;
+  final StorySpotSummary spot;
   final bool isCollected;
   final bool inRange;
   final VoidCallback onTap;

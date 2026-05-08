@@ -25,8 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
   NaverMapController? _mapController;
 
   String _regionId = 'seongsu';
-  List<StorySpot> _spots = [];
-  StorySpot? _selectedSpot;
+  List<StorySpotSummary> _spots = [];
+  StorySpotSummary? _selectedSpot;
   Set<String> _collectedIds = {};
   final Map<String, NOverlayImage> _markerIconCache = {};
 
@@ -40,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _locationPickMode = false;
 
   // 인앱 알림 팝업
-  StorySpot? _popupSpot;
+  StorySpotSummary? _popupSpot;
   final Set<String> _notifiedIds = {};
   bool _notifyResetFlash = false;
 
@@ -108,8 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _triggerPopupIfNeeded(double lat, double lng) {
-    // 이미 알림을 보낸 적 없는 스팟 중 가장 가까운 것 선택
-    StorySpot? closest;
+    StorySpotSummary? closest;
     double minDist = double.infinity;
     for (final spot in _spots) {
       if (!_inRangeIds.contains(spot.id)) continue;
@@ -207,7 +206,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _openStory(StorySpot spot) {
+  Future<void> _openStory(StorySpotSummary summary) async {
+    final spot = await _repo.fetchSpot(_regionId, summary.id);
+    if (spot == null || !mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => StoryScreen(
@@ -231,7 +232,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadSpots();
   }
 
-  void _selectSpot(StorySpot spot) {
+  void _selectSpot(StorySpotSummary spot) {
     setState(() => _selectedSpot = spot);
     _refreshMarkers();
   }

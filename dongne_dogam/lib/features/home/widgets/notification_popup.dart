@@ -4,7 +4,7 @@ import '../../../core/app_colors.dart';
 import '../../../data/models/story_spot.dart';
 
 class NotificationPopup extends StatefulWidget {
-  final StorySpot spot;
+  final StorySpotSummary spot;
   final VoidCallback onTap;
   final VoidCallback onDismiss;
 
