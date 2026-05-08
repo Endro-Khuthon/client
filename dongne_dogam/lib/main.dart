@@ -50,16 +50,20 @@ class _RootShellState extends State<_RootShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _tab,
-        children: _screens,
-      ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-        child: _BottomNav(
-          currentIndex: _tab,
-          onTap: (i) => setState(() => _tab = i),
-        ),
+      body: Stack(
+        children: [
+          IndexedStack(
+            index: _tab,
+            children: _screens,
+          ),
+          Positioned(
+            left: 20, right: 20, bottom: 24,
+            child: _BottomNav(
+              currentIndex: _tab,
+              onTap: (i) => setState(() => _tab = i),
+            ),
+          ),
+        ],
       ),
     );
   }
