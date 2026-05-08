@@ -232,13 +232,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _selectSpot(StorySpotSummary spot) {
-    setState(() => _selectedSpot = spot);
+    setState(() {
+      _selectedSpot = spot;
+      _markerIconCache.clear();
+    });
     _refreshMarkers();
   }
 
   void _dismissCard() {
     if (_selectedSpot == null) return;
-    setState(() => _selectedSpot = null);
+    setState(() {
+      _selectedSpot = null;
+      _markerIconCache.clear();
+    });
     _refreshMarkers();
   }
 
@@ -507,37 +513,39 @@ class _SpotMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: (isCollected && imageUrl.isEmpty) ? Colors.white : (isCollected ? color : AppColors.surfaceAlt),
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: isActive ? borderColor : AppColors.line,
-          width: isActive ? 2.5 : 1,
+    return ClipOval(
+      child: Container(
+        decoration: BoxDecoration(
+          color: (isCollected && imageUrl.isEmpty) ? Colors.white : (isCollected ? color : AppColors.surfaceAlt),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isActive ? borderColor : AppColors.inkMute,
+            width: isActive ? 2.5 : 1.8,
+          ),
+          boxShadow: isActive
+              ? [BoxShadow(color: borderColor.withValues(alpha: 0.4), blurRadius: 8, spreadRadius: 1)]
+              : null,
         ),
-        boxShadow: isActive
-            ? [BoxShadow(color: borderColor.withValues(alpha: 0.4), blurRadius: 8, spreadRadius: 1)]
-            : null,
-      ),
-      clipBehavior: Clip.hardEdge,
-      child: isCollected && imageUrl.isNotEmpty
-          ? Image.network(
-              imageUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (_, e, stack) => const Icon(Icons.check, color: Colors.green),
-            )
-          : isCollected
-              ? const Icon(Icons.check, color: Colors.green)
-              : Center(
-                  child: Text(
-                    '?',
-                    style: TextStyle(
-                      fontSize: isActive ? 18 : 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.inkMute,
+        clipBehavior: Clip.hardEdge,
+        child: isCollected && imageUrl.isNotEmpty
+            ? Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, e, stack) => const Icon(Icons.check, color: Colors.green),
+              )
+            : isCollected
+                ? const Center(child: Icon(Icons.check, color: Colors.green))
+                : Center(
+                    child: Text(
+                      '?',
+                      style: TextStyle(
+                        fontSize: isActive ? 18 : 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.inkMute,
+                      ),
                     ),
                   ),
-                ),
+      ),
     );
   }
 }

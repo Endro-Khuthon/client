@@ -26,7 +26,41 @@ class DogneDogamApp extends StatelessWidget {
         scaffoldBackgroundColor: AppColors.bg,
         fontFamily: 'Pretendard',
       ),
-      home: const _RootShell(),
+      home: const _SplashScreen(),
+    );
+  }
+}
+
+class _SplashScreen extends StatefulWidget {
+  const _SplashScreen();
+
+  @override
+  State<_SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<_SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const _RootShell()),
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: Image.asset(
+          'assets/icon1.png',
+          width: 160,
+          height: 160,
+        ),
+      ),
     );
   }
 }
