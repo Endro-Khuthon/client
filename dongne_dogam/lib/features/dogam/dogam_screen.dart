@@ -23,7 +23,7 @@ class _DogamScreenState extends State<DogamScreen> {
     {'id': 'yeongdo', 'name': '부산 영도'},
   ];
 
-  Map<String, List<StorySpot>> _spotsByRegion = {};
+  Map<String, List<StorySpotSummary>> _spotsByRegion = {};
   Set<String> _collectedIds = {};
   bool _loading = true;
 
@@ -39,9 +39,9 @@ class _DogamScreenState extends State<DogamScreen> {
       _dogamRepo.getCollectedIds(),
     ]);
 
-    final byRegion = <String, List<StorySpot>>{};
+    final byRegion = <String, List<StorySpotSummary>>{};
     for (var i = 0; i < _regions.length; i++) {
-      byRegion[_regions[i]['id']!] = results[i] as List<StorySpot>;
+      byRegion[_regions[i]['id']!] = results[i] as List<StorySpotSummary>;
     }
 
     setState(() {
@@ -51,7 +51,9 @@ class _DogamScreenState extends State<DogamScreen> {
     });
   }
 
-  void _openStory(StorySpot spot) {
+  Future<void> _openStory(String regionId, StorySpotSummary summary) async {
+    final spot = await _spotRepo.fetchSpot(regionId, summary.id);
+    if (spot == null || !mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => StoryScreen(
@@ -94,7 +96,7 @@ class _DogamScreenState extends State<DogamScreen> {
                       spots: spots,
                       collected: collected,
                       ratio: ratio,
-                      onSpotTap: _openStory,
+                      onSpotTap: (spot) => _openStory(r['id']!, spot),
                     );
                   }),
                   const SliverPadding(padding: EdgeInsets.only(bottom: 120)),
@@ -107,10 +109,10 @@ class _DogamScreenState extends State<DogamScreen> {
 
 class _RegionSection extends StatelessWidget {
   final String name;
-  final List<StorySpot> spots;
-  final List<StorySpot> collected;
+  final List<StorySpotSummary> spots;
+  final List<StorySpotSummary> collected;
   final double ratio;
-  final ValueChanged<StorySpot> onSpotTap;
+  final ValueChanged<StorySpotSummary> onSpotTap;
 
   const _RegionSection({
     required this.name,
@@ -180,7 +182,7 @@ class _RegionSection extends StatelessWidget {
 }
 
 class _SpotRow extends StatelessWidget {
-  final StorySpot spot;
+  final StorySpotSummary spot;
   final VoidCallback onTap;
 
   const _SpotRow({required this.spot, required this.onTap});

@@ -1,3 +1,30 @@
+class StorySpotSummary {
+  final String id;
+  final String name;
+  final String category;
+  final double lat;
+  final double lng;
+  final String summary;
+
+  const StorySpotSummary({
+    required this.id,
+    required this.name,
+    required this.category,
+    required this.lat,
+    required this.lng,
+    required this.summary,
+  });
+
+  factory StorySpotSummary.fromJson(Map<String, dynamic> json) => StorySpotSummary(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        category: json['category'] as String,
+        lat: (json['lat'] as num).toDouble(),
+        lng: (json['lng'] as num).toDouble(),
+        summary: json['summary'] as String,
+      );
+}
+
 class StorySpot {
   final String id;
   final String name;
