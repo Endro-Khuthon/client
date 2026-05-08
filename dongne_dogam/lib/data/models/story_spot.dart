@@ -33,6 +33,6 @@ class StorySpot {
         storyPast: json['story_past'] as String,
         storyPresent: json['story_present'] as String,
         storyMeaning: json['story_meaning'] as String,
-        keywords: List<String>.from(json['keywords'] as List),
+        keywords: List<String>.from(json['keywords'] as List? ?? []),
       );
 }

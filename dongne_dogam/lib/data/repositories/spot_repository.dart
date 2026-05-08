@@ -12,7 +12,9 @@ class SpotRepository {
   Future<List<StorySpot>> fetchSpots(String regionId) async {
     if (useMock) return mockSpots[regionId] ?? [];
     final res = await _client.dio.get('/regions/$regionId/spots');
-    return (res.data as List).map((e) => StorySpot.fromJson(e)).toList();
+    final data = res.data;
+    if (data is! List) return [];
+    return data.map((e) => StorySpot.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   Future<StorySpot?> fetchSpot(String spotId) async {
@@ -25,6 +27,7 @@ class SpotRepository {
       return null;
     }
     final res = await _client.dio.get('/spots/$spotId');
-    return StorySpot.fromJson(res.data);
+    if (res.data == null) return null;
+    return StorySpot.fromJson(res.data as Map<String, dynamic>);
   }
 }
