@@ -69,11 +69,11 @@ lib/
   - `label`: setup
   - `내용`: lib/ 하위 core, data, features 폴더 구조 생성
 
-- [ ] **[DESIGN-01] 무드보드 및 컨셉 정의**
+- [x] **[DESIGN-01] 무드보드 및 컨셉 정의**
   - `label`: design
   - `내용`: 컬러 팔레트(Primary/Surface/Accent), 폰트(Noto Sans KR), 톤앤매너 확정
 
-- [ ] **[DESIGN-02] 핵심 5개 화면 와이어프레임**
+- [x] **[DESIGN-02] 핵심 5개 화면 와이어프레임**
   - `label`: design
   - `내용`: 홈 / 알림 팝업 / 스토리북 / 도감 / (여유 시) 추천 화면
 
@@ -81,11 +81,11 @@ lib/
 
 ### T+2:00 ~ T+3:30
 
-- [ ] **[DESIGN-03] UI 컴포넌트 정의**
+- [x] **[DESIGN-03] UI 컴포넌트 정의**
   - `label`: design
   - `내용`: 카테고리별 마커 아이콘 6종, 스토리 카드, 수집 버튼 상태 2가지, 프로그레스 바
 
-- [ ] **[FE-01] Flutter 프로젝트 세팅**
+- [x] **[FE-01] Flutter 프로젝트 세팅**
   - `label`: frontend
   - `내용`: pubspec.yaml 패키지 추가 확인 (geolocator, flutter_map, shared_preferences, go_router, dio)
 
