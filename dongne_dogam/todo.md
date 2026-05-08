@@ -89,7 +89,7 @@ lib/
   - `label`: frontend
   - `내용`: pubspec.yaml 패키지 추가 확인 (geolocator, flutter_map, shared_preferences, go_router, dio)
 
-- [ ] **[FE-11] 로컬 저장 레이어 (DogamRepository)**
+- [x] **[FE-11] 로컬 저장 레이어 (DogamRepository)**
   - `label`: frontend
   - `내용`: shared_preferences로 수집한 스팟 ID 저장/조회/완성률 계산
 
