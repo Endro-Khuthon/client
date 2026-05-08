@@ -37,7 +37,7 @@ class _NotificationPopupState extends State<NotificationPopup>
     ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
     _ctrl.forward();
 
-    Future.delayed(const Duration(seconds: 4), () {
+    Future.delayed(const Duration(seconds: 8), () {
       if (mounted) _dismiss();
     });
   }
