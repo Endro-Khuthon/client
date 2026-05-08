@@ -93,7 +93,7 @@ lib/
   - `label`: frontend
   - `내용`: shared_preferences로 수집한 스팟 ID 저장/조회/완성률 계산
 
-- [ ] **[FE-02] API 클라이언트**
+- [x] **[FE-02] API 클라이언트**
   - `label`: frontend
   - `내용`: dio 기본 설정, ApiClient 클래스, SpotRepository fetchSpots/fetchSpot 구현
 
