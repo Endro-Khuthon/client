@@ -6,7 +6,7 @@ class SpotRepository {
   final ApiClient _client;
   final bool useMock;
 
-  SpotRepository({ApiClient? client, this.useMock = true})
+  SpotRepository({ApiClient? client, this.useMock = false})
       : _client = client ?? ApiClient();
 
   Future<List<StorySpotSummary>> fetchSpots(String regionId) async {

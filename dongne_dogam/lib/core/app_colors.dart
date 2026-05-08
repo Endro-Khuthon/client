@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // warm 팔레트 (기본)
-  static const bg         = Color(0xFFFBF7ED);
+  // cool gray 팔레트
+  static const bg         = Color(0xFFF5F6F8);
   static const surface    = Color(0xFFFFFFFF);
-  static const surfaceAlt = Color(0xFFF4EEDD);
-  static const ink        = Color(0xFF1F1B16);
-  static const inkSub     = Color(0xFF65594A);
-  static const inkMute    = Color(0xFFA89C88);
-  static const line       = Color(0xFFEBE3CE);
-  static const accent     = Color(0xFFC9402F);
-  static const gold       = Color(0xFFD6B266);
+  static const surfaceAlt = Color(0xFFECEEF2);
+  static const ink        = Color(0xFF111318);
+  static const inkSub     = Color(0xFF4A5060);
+  static const inkMute    = Color(0xFF9399A8);
+  static const line       = Color(0xFFE2E5EC);
+  static const accent     = Color(0xFF3D6FFF);
+  static const gold       = Color(0xFF3D6FFF);
 
   // 카테고리 색상
   static const catColors = <String, Color>{
-    '역사':    Color(0xFF7E2A22),
-    '건축':    Color(0xFF365E78),
-    '인물':    Color(0xFF5A4A8E),
-    '전통문화': Color(0xFFB5392E),
-    '예술문화': Color(0xFFC4A05A),
-    '자연문화': Color(0xFF3F6B4A),
+    '역사':    Color(0xFFB33A3A),
+    '건축':    Color(0xFF2F6FBF),
+    '인물':    Color(0xFF6B4FBF),
+    '전통문화': Color(0xFFD4542A),
+    '예술문화': Color(0xFF2E9E7A),
+    '자연문화': Color(0xFF3A8C3F),
   };
 
   static const catGlyphs = <String, String>{

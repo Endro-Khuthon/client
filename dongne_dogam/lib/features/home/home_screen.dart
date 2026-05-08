@@ -24,7 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _dogamRepo = DogamRepository();
   NaverMapController? _mapController;
 
-  String _regionId = 'seongsu';
+  String _regionId = 'kyunghee_global';
   List<StorySpotSummary> _spots = [];
   StorySpotSummary? _selectedSpot;
   Set<String> _collectedIds = {};
@@ -33,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // 실시간 GPS
   final Set<String> _inRangeIds = {};
   StreamSubscription<Position>? _positionSub;
-  static const _rangeMeters = 1000.0;
+  static const _rangeMeters = 500.0;
 
   // 데모용 위치 설정
   NLatLng? _mockPosition;
@@ -45,9 +45,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _notifyResetFlash = false;
 
   static const _regions = [
-    {'id': 'seongsu', 'name': '성수동',      'lat': 37.5446, 'lng': 127.0556},
-    {'id': 'jeonju',  'name': '전주 한옥마을', 'lat': 35.8150, 'lng': 127.1530},
-    {'id': 'yeongdo', 'name': '부산 영도',    'lat': 35.0780, 'lng': 129.0670},
+    {'id': 'kyunghee_global', 'name': '경희대 글로벌캠퍼스', 'lat': 37.2440, 'lng': 127.0800},
+    {'id': 'seongsu', 'name': '성수동', 'lat': 37.5443, 'lng': 127.0563},
   ];
 
   @override
@@ -159,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final circle = NCircleOverlay(
       id: '__range_circle',
       center: pos,
-      radius: 1000,
+      radius: 500,
       color: AppColors.accent.withValues(alpha: 0.08),
       outlineColor: AppColors.accent.withValues(alpha: 0.35),
       outlineWidth: 1.5,
@@ -233,13 +232,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _selectSpot(StorySpotSummary spot) {
-    setState(() => _selectedSpot = spot);
+    setState(() {
+      _selectedSpot = spot;
+      _markerIconCache.clear();
+    });
     _refreshMarkers();
   }
 
   void _dismissCard() {
     if (_selectedSpot == null) return;
-    setState(() => _selectedSpot = null);
+    setState(() {
+      _selectedSpot = null;
+      _markerIconCache.clear();
+    });
     _refreshMarkers();
   }
 
@@ -264,22 +269,30 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<Set<NAddableOverlay>> _buildMarkers() async {
+    // 모든 이미지 미리 로드
+    await Future.wait(_spots.map((spot) async {
+      if (spot.imageUrl.isNotEmpty && mounted) {
+        try {
+          await precacheImage(NetworkImage(spot.imageUrl), context);
+        } catch (_) {}
+      }
+    }));
+
     final markers = <NAddableOverlay>{};
     for (final spot in _spots) {
       final isActive = _selectedSpot?.id == spot.id;
       final isCollected = _collectedIds.contains(spot.id);
       final color = AppColors.forCategory(spot.category);
-      final glyph = AppColors.glyphForCategory(spot.category);
-      final size = isActive ? 48.0 : 36.0;
+      final size = isActive ? 52.0 : 40.0;
 
       final cacheKey = '${spot.id}_${isActive}_$isCollected';
       final icon = _markerIconCache[cacheKey] ?? await NOverlayImage.fromWidget(
         widget: _SpotMarker(
-          glyph: isCollected ? glyph : '?',
+          imageUrl: spot.imageUrl,
           color: isCollected ? color : AppColors.surfaceAlt,
-          textColor: isCollected ? Colors.white : AppColors.inkMute,
           isActive: isActive,
           borderColor: color,
+          isCollected: isCollected,
         ),
         size: Size(size, size),
         context: context,
@@ -383,16 +396,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _GlassPill(
-                        child: Text(
-                          '${_collectedIds.length}/${_spots.length}',
-                          style: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w600,
-                            color: AppColors.ink,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
                       GestureDetector(
                         onTap: () async {
                           await _dogamRepo.clearAll();
@@ -494,62 +497,55 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _SpotMarker extends StatelessWidget {
-  final String glyph;
+  final String imageUrl;
   final Color color;
-  final Color textColor;
-  final bool isActive;
   final Color borderColor;
+  final bool isActive;
+  final bool isCollected;
 
   const _SpotMarker({
-    required this.glyph,
+    required this.imageUrl,
     required this.color,
-    required this.textColor,
-    required this.isActive,
     required this.borderColor,
+    required this.isActive,
+    required this.isCollected,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: isActive ? borderColor : AppColors.line,
-          width: isActive ? 2.5 : 1,
-        ),
-        boxShadow: isActive
-            ? [BoxShadow(color: borderColor.withValues(alpha: 0.4), blurRadius: 8, spreadRadius: 1)]
-            : null,
-      ),
-      child: Center(
-        child: Text(
-          glyph,
-          style: TextStyle(
-            fontSize: isActive ? 18 : 13,
-            fontWeight: FontWeight.w700,
-            color: textColor,
+    return ClipOval(
+      child: Container(
+        decoration: BoxDecoration(
+          color: (isCollected && imageUrl.isEmpty) ? Colors.white : (isCollected ? color : AppColors.surfaceAlt),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isActive ? borderColor : AppColors.inkMute,
+            width: isActive ? 2.5 : 1.8,
           ),
+          boxShadow: isActive
+              ? [BoxShadow(color: borderColor.withValues(alpha: 0.4), blurRadius: 8, spreadRadius: 1)]
+              : null,
         ),
+        clipBehavior: Clip.hardEdge,
+        child: isCollected && imageUrl.isNotEmpty
+            ? Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, e, stack) => const Icon(Icons.check, color: Colors.green),
+              )
+            : isCollected
+                ? const Center(child: Icon(Icons.check, color: Colors.green))
+                : Center(
+                    child: Text(
+                      '?',
+                      style: TextStyle(
+                        fontSize: isActive ? 18 : 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.inkMute,
+                      ),
+                    ),
+                  ),
       ),
-    );
-  }
-}
-
-class _GlassPill extends StatelessWidget {
-  final Widget child;
-  const _GlassPill({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.line),
-      ),
-      child: child,
     );
   }
 }

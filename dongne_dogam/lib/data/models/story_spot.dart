@@ -5,6 +5,7 @@ class StorySpotSummary {
   final double lat;
   final double lng;
   final String summary;
+  final String imageUrl;
 
   const StorySpotSummary({
     required this.id,
@@ -13,6 +14,7 @@ class StorySpotSummary {
     required this.lat,
     required this.lng,
     required this.summary,
+    this.imageUrl = '',
   });
 
   factory StorySpotSummary.fromJson(Map<String, dynamic> json) => StorySpotSummary(
@@ -22,6 +24,7 @@ class StorySpotSummary {
         lat: (json['lat'] as num).toDouble(),
         lng: (json['lng'] as num).toDouble(),
         summary: json['summary'] as String,
+        imageUrl: json['image_url'] as String? ?? '',
       );
 }
 
@@ -36,6 +39,7 @@ class StorySpot {
   final String storyPresent;
   final String storyMeaning;
   final List<String> keywords;
+  final String imageUrl;
 
   const StorySpot({
     required this.id,
@@ -48,6 +52,7 @@ class StorySpot {
     required this.storyPresent,
     required this.storyMeaning,
     required this.keywords,
+    this.imageUrl = '',
   });
 
   factory StorySpot.fromJson(Map<String, dynamic> json) => StorySpot(
@@ -61,5 +66,6 @@ class StorySpot {
         storyPresent: json['story_present'] as String,
         storyMeaning: json['story_meaning'] as String,
         keywords: List<String>.from(json['keywords'] as List? ?? []),
+        imageUrl: json['image_url'] as String? ?? '',
       );
 }
