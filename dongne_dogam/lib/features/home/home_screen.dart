@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../core/app_colors.dart';
 import '../../data/models/story_spot.dart';
 import '../../data/repositories/spot_repository.dart';
+import '../story/story_screen.dart';
 import 'widgets/notification_popup.dart';
 import 'widgets/story_card.dart';
 
@@ -196,6 +197,21 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     }
+  }
+
+  void _openStory(StorySpot spot) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => StoryScreen(
+          spot: spot,
+          isCollected: _collectedIds.contains(spot.id),
+          onCollect: () {
+            setState(() => _collectedIds.add(spot.id));
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
+    );
   }
 
   void _selectRegion(String regionId) {
@@ -430,7 +446,11 @@ class _HomeScreenState extends State<HomeScreen> {
               top: 0, left: 0, right: 0,
               child: NotificationPopup(
                 spot: _popupSpot!,
-                onTap: () => setState(() => _popupSpot = null),
+                onTap: () {
+                  final spot = _popupSpot!;
+                  setState(() => _popupSpot = null);
+                  _openStory(spot);
+                },
                 onDismiss: () => setState(() => _popupSpot = null),
               ),
             ),
@@ -446,7 +466,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     spot: _selectedSpot!,
                     isCollected: _collectedIds.contains(_selectedSpot!.id),
                     inRange: _inRangeIds.contains(_selectedSpot!.id),
-                    onTap: () {},
+                    onTap: () => _openStory(_selectedSpot!),
                   )
                 : const SizedBox.shrink(),
           ),
