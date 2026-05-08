@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -25,6 +27,12 @@ class _HomeScreenState extends State<HomeScreen> {
   // 마커 이미지 캐시: '${spotId}_${isActive}_${isCollected}' → NOverlayImage
   final Map<String, NOverlayImage> _markerIconCache = {};
 
+  // 1km 이내 스팟 ID 집합 (FE-07 알림 연동용)
+  final Set<String> _inRangeIds = {};
+  StreamSubscription<Position>? _positionSub;
+
+  static const _rangeMeters = 1000.0;
+
   static const _regions = [
     {'id': 'seongsu', 'name': '성수동',      'lat': 37.5446, 'lng': 127.0556},
     {'id': 'jeonju',  'name': '전주 한옥마을', 'lat': 35.8150, 'lng': 127.1530},
@@ -35,6 +43,49 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadSpots();
+    _initLocationStream();
+  }
+
+  @override
+  void dispose() {
+    _positionSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _initLocationStream() async {
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      return;
+    }
+
+    _positionSub = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 20, // 20m 이상 이동 시에만 업데이트
+      ),
+    ).listen(_onPositionUpdate);
+  }
+
+  void _onPositionUpdate(Position pos) {
+    final newInRange = <String>{};
+    for (final spot in _spots) {
+      final dist = Geolocator.distanceBetween(
+        pos.latitude, pos.longitude,
+        spot.lat, spot.lng,
+      );
+      if (dist <= _rangeMeters) newInRange.add(spot.id);
+    }
+
+    // 새로 범위 안에 들어온 스팟만 setState (불필요한 리빌드 방지)
+    if (newInRange != _inRangeIds) {
+      setState(() => _inRangeIds
+        ..clear()
+        ..addAll(newInRange));
+    }
   }
 
   Future<void> _loadSpots() async {
@@ -235,7 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? StoryCard(
                     spot: _selectedSpot!,
                     isCollected: _collectedIds.contains(_selectedSpot!.id),
-                    inRange: false,
+                    inRange: _inRangeIds.contains(_selectedSpot!.id),
                     onTap: () {},
                   )
                 : const SizedBox.shrink(),
