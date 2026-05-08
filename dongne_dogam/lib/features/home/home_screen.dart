@@ -206,8 +206,12 @@ class _HomeScreenState extends State<HomeScreen> {
           spot: spot,
           isCollected: _collectedIds.contains(spot.id),
           onCollect: () {
-            setState(() => _collectedIds.add(spot.id));
+            setState(() {
+              _collectedIds.add(spot.id);
+              _markerIconCache.clear();
+            });
             Navigator.of(context).pop();
+            _refreshMarkers();
           },
         ),
       ),
