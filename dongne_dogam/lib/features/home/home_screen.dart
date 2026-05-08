@@ -350,14 +350,32 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
-                  _GlassPill(
-                    child: Text(
-                      '${_collectedIds.length}/${_spots.length}',
-                      style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w600,
-                        color: AppColors.ink,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _GlassPill(
+                        child: Text(
+                          '${_collectedIds.length}/${_spots.length}',
+                          style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w600,
+                            color: AppColors.ink,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => setState(() => _notifiedIds.clear()),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface.withValues(alpha: 0.92),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: AppColors.line),
+                          ),
+                          child: const Icon(Icons.notifications_active_outlined, size: 14, color: AppColors.inkSub),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
