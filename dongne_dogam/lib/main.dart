@@ -40,12 +40,12 @@ class _RootShell extends StatefulWidget {
 
 class _RootShellState extends State<_RootShell> {
   int _tab = 0;
+  int _dogamKey = 0;
 
-  static const _screens = [
-    HomeScreen(),
-    DogamScreen(),
-    SettingsScreen(),
-  ];
+  void _onTabTap(int i) {
+    if (i == 1) setState(() => _dogamKey++);
+    setState(() => _tab = i);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,13 +54,17 @@ class _RootShellState extends State<_RootShell> {
         children: [
           IndexedStack(
             index: _tab,
-            children: _screens,
+            children: [
+              const HomeScreen(),
+              DogamScreen(key: ValueKey(_dogamKey)),
+              const SettingsScreen(),
+            ],
           ),
           Positioned(
             left: 20, right: 20, bottom: 24,
             child: _BottomNav(
               currentIndex: _tab,
-              onTap: (i) => setState(() => _tab = i),
+              onTap: _onTabTap,
             ),
           ),
         ],

@@ -34,4 +34,10 @@ class DogamRepository {
     final collected = allSpotIds.where(_cachedIds!.contains).length;
     return collected / allSpotIds.length;
   }
+
+  Future<void> clearAll() async {
+    await _init();
+    _cachedIds!.clear();
+    await _prefs!.remove(_key);
+  }
 }
