@@ -18,9 +18,8 @@ class _DogamScreenState extends State<DogamScreen> {
   final _dogamRepo = DogamRepository();
 
   static const _regions = [
+    {'id': 'kyunghee_global', 'name': '경희대 글로벌캠퍼스'},
     {'id': 'seongsu', 'name': '성수동'},
-    {'id': 'jeonju',  'name': '전주 한옥마을'},
-    {'id': 'yeongdo', 'name': '부산 영도'},
   ];
 
   Map<String, List<StorySpotSummary>> _spotsByRegion = {};
@@ -59,7 +58,7 @@ class _DogamScreenState extends State<DogamScreen> {
         builder: (_) => StoryScreen(
           spot: spot,
           isCollected: true,
-          onCollect: () {},
+          onCollect: () async {},
         ),
       ),
     );
@@ -190,7 +189,6 @@ class _SpotRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = AppColors.forCategory(spot.category);
-    final glyph = AppColors.glyphForCategory(spot.category);
 
     return GestureDetector(
       onTap: onTap,
@@ -204,12 +202,14 @@ class _SpotRow extends StatelessWidget {
                 color: color.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: Center(
-                child: Text(
-                  glyph,
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: color),
-                ),
-              ),
+              clipBehavior: Clip.hardEdge,
+              child: spot.imageUrl.isNotEmpty
+                  ? Image.network(
+                      spot.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, e, stack) => Icon(Icons.check, color: color, size: 18),
+                    )
+                  : Icon(Icons.check, color: color, size: 18),
             ),
             const SizedBox(width: 12),
             Expanded(
