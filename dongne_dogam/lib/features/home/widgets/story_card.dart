@@ -22,7 +22,7 @@ class StoryCard extends StatelessWidget {
     final catColor = AppColors.forCategory(spot.category);
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: inRange ? onTap : null,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(

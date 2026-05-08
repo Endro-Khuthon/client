@@ -219,7 +219,6 @@ class _HomeScreenState extends State<HomeScreen> {
               _collectedIds.add(spot.id);
               _markerIconCache.clear();
             });
-            if (mounted) Navigator.of(context).pop();
             _refreshMarkers();
           },
         ),

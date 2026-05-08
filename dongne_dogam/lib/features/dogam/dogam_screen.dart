@@ -4,6 +4,7 @@ import '../../core/app_colors.dart';
 import '../../data/models/story_spot.dart';
 import '../../data/repositories/dogam_repository.dart';
 import '../../data/repositories/spot_repository.dart';
+import '../story/story_screen.dart';
 
 class DogamScreen extends StatefulWidget {
   const DogamScreen({super.key});
@@ -50,6 +51,18 @@ class _DogamScreenState extends State<DogamScreen> {
     });
   }
 
+  void _openStory(StorySpot spot) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => StoryScreen(
+          spot: spot,
+          isCollected: true,
+          onCollect: () {},
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -81,6 +94,7 @@ class _DogamScreenState extends State<DogamScreen> {
                       spots: spots,
                       collected: collected,
                       ratio: ratio,
+                      onSpotTap: _openStory,
                     );
                   }),
                   const SliverPadding(padding: EdgeInsets.only(bottom: 120)),
@@ -96,12 +110,14 @@ class _RegionSection extends StatelessWidget {
   final List<StorySpot> spots;
   final List<StorySpot> collected;
   final double ratio;
+  final ValueChanged<StorySpot> onSpotTap;
 
   const _RegionSection({
     required this.name,
     required this.spots,
     required this.collected,
     required this.ratio,
+    required this.onSpotTap,
   });
 
   @override
@@ -134,7 +150,6 @@ class _RegionSection extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            // 완성률 프로그레스 바
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
@@ -154,7 +169,7 @@ class _RegionSection extends StatelessWidget {
                 ),
               )
             else
-              ...collected.map((spot) => _SpotRow(spot: spot)),
+              ...collected.map((spot) => _SpotRow(spot: spot, onTap: () => onSpotTap(spot))),
             const SizedBox(height: 8),
             Divider(color: AppColors.line),
           ],
@@ -166,54 +181,59 @@ class _RegionSection extends StatelessWidget {
 
 class _SpotRow extends StatelessWidget {
   final StorySpot spot;
-  const _SpotRow({required this.spot});
+  final VoidCallback onTap;
+
+  const _SpotRow({required this.spot, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final color = AppColors.forCategory(spot.category);
     final glyph = AppColors.glyphForCategory(spot.category);
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          Container(
-            width: 36, height: 36,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                glyph,
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: color),
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  glyph,
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: color),
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  spot.name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.ink,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    spot.name,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.ink,
+                    ),
                   ),
-                ),
-                Text(
-                  spot.summary,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12, color: AppColors.inkMute),
-                ),
-              ],
+                  Text(
+                    spot.summary,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12, color: AppColors.inkMute),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const Icon(Icons.check_circle, size: 18, color: AppColors.accent),
-        ],
+            const Icon(Icons.chevron_right, size: 18, color: AppColors.inkMute),
+          ],
+        ),
       ),
     );
   }
