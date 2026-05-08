@@ -63,10 +63,12 @@ class _StoryScreenState extends State<StoryScreen>
         children: [
           CustomScrollView(
             slivers: [
+              // ── 헤더 ──────────────────────────────────────────
               SliverAppBar(
-                expandedHeight: 200,
+                expandedHeight: 220,
                 pinned: true,
                 backgroundColor: AppColors.bg,
+                elevation: 0,
                 leading: GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
                   child: Container(
@@ -81,32 +83,47 @@ class _StoryScreenState extends State<StoryScreen>
                 ),
                 flexibleSpace: FlexibleSpaceBar(
                   background: Container(
-                    color: color.withValues(alpha: 0.08),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          color.withValues(alpha: 0.13),
+                          AppColors.bg,
+                        ],
+                      ),
+                    ),
                     child: SafeArea(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const SizedBox(height: 40),
+                          const SizedBox(height: 48),
+                          // 글리프 아이콘
                           Container(
-                            width: 64, height: 64,
+                            width: 68, height: 68,
                             decoration: BoxDecoration(
                               color: color.withValues(alpha: 0.15),
                               shape: BoxShape.circle,
+                              border: Border.all(
+                                color: color.withValues(alpha: 0.25),
+                                width: 1.5,
+                              ),
                             ),
                             child: Center(
                               child: Text(
                                 glyph,
                                 style: TextStyle(
-                                  fontSize: 28,
+                                  fontSize: 30,
                                   fontWeight: FontWeight.w700,
                                   color: color,
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 14),
+                          // 카테고리 칩
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                             decoration: BoxDecoration(
                               color: color.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(999),
@@ -117,17 +134,21 @@ class _StoryScreenState extends State<StoryScreen>
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: color,
+                                letterSpacing: 0.5,
                               ),
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
+                          // 장소명 — 가장 큰 타이포
                           Text(
                             widget.spot.name,
+                            textAlign: TextAlign.center,
                             style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
                               color: AppColors.ink,
-                              letterSpacing: -0.3,
+                              letterSpacing: -0.5,
+                              height: 1.2,
                             ),
                           ),
                         ],
@@ -137,55 +158,70 @@ class _StoryScreenState extends State<StoryScreen>
                 ),
               ),
 
+              // ── 본문 ──────────────────────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        widget.spot.summary,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          height: 1.65,
-                          color: AppColors.inkSub,
-                          fontStyle: FontStyle.italic,
+                      // summary — italic lead
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            left: BorderSide(color: color.withValues(alpha: 0.5), width: 3),
+                          ),
+                        ),
+                        child: Text(
+                          widget.spot.summary,
+                          style: TextStyle(
+                            fontSize: 14,
+                            height: 1.7,
+                            color: AppColors.inkSub,
+                            fontStyle: FontStyle.italic,
+                            letterSpacing: 0.1,
+                          ),
                         ),
                       ),
+                      const SizedBox(height: 24),
+
+                      // 섹션 카드 3개
+                      _StoryCard(label: '과거', color: color, content: widget.spot.storyPast),
+                      const SizedBox(height: 12),
+                      _StoryCard(label: '현재', color: color, content: widget.spot.storyPresent),
+                      const SizedBox(height: 12),
+                      _StoryCard(label: '의미', color: color, content: widget.spot.storyMeaning),
                       const SizedBox(height: 28),
 
-                      _StorySection(label: '과거', color: color, content: widget.spot.storyPast),
-                      const SizedBox(height: 20),
-                      _StorySection(label: '현재', color: color, content: widget.spot.storyPresent),
-                      const SizedBox(height: 20),
-                      _StorySection(label: '의미', color: color, content: widget.spot.storyMeaning),
-                      const SizedBox(height: 28),
-
+                      // 키워드 태그
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: widget.spot.keywords.map((kw) => Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: AppColors.surfaceAlt,
+                            color: color.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: AppColors.line),
+                            border: Border.all(color: color.withValues(alpha: 0.20)),
                           ),
                           child: Text(
                             '# $kw',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.inkSub,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
+                              color: color,
+                              letterSpacing: 0.2,
                             ),
                           ),
                         )).toList(),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 36),
 
+                      // 수집 버튼
                       SizedBox(
                         width: double.infinity,
-                        height: 52,
+                        height: 54,
                         child: ElevatedButton(
                           onPressed: widget.isCollected ? null : _handleCollect,
                           style: ElevatedButton.styleFrom(
@@ -201,7 +237,7 @@ class _StoryScreenState extends State<StoryScreen>
                             children: [
                               Icon(
                                 widget.isCollected ? Icons.check_circle : Icons.add_circle_outline,
-                                size: 18,
+                                size: 19,
                               ),
                               const SizedBox(width: 8),
                               Text(
@@ -209,6 +245,7 @@ class _StoryScreenState extends State<StoryScreen>
                                 style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.1,
                                 ),
                               ),
                             ],
@@ -269,12 +306,13 @@ class _StoryScreenState extends State<StoryScreen>
   }
 }
 
-class _StorySection extends StatelessWidget {
+// 섹션 카드 — 흰 배경 + 상단 컬러 bar
+class _StoryCard extends StatelessWidget {
   final String label;
   final Color color;
   final String content;
 
-  const _StorySection({
+  const _StoryCard({
     required this.label,
     required this.color,
     required this.content,
@@ -282,40 +320,58 @@ class _StorySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 3, height: 16,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(2),
-              ),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.line),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 상단 컬러 헤더
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            color: color.withValues(alpha: 0.09),
+            child: Row(
+              children: [
+                Container(
+                  width: 3, height: 14,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: color,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Text(
-          content,
-          style: const TextStyle(
-            fontSize: 15,
-            height: 1.75,
-            color: AppColors.ink,
           ),
-        ),
-      ],
+          // 본문
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            child: Text(
+              content,
+              style: const TextStyle(
+                fontSize: 14.5,
+                height: 1.8,
+                color: AppColors.ink,
+                letterSpacing: 0.05,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
