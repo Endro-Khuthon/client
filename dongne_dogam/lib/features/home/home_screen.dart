@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:flutter_naver_map/flutter_naver_map.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../core/app_colors.dart';
 import '../../data/models/story_spot.dart';
@@ -16,15 +16,15 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _repo = SpotRepository();
-  final _mapController = MapController();
+  NaverMapController? _mapController;
 
   String _regionId = 'seongsu';
   List<StorySpot> _spots = [];
-  int _activeIdx = 0;
+  StorySpot? _selectedSpot;
   final Set<String> _collectedIds = {};
 
   static const _regions = [
-    {'id': 'seongsu', 'name': '성수동',     'lat': 37.5446, 'lng': 127.0556},
+    {'id': 'seongsu', 'name': '성수동',      'lat': 37.5446, 'lng': 127.0556},
     {'id': 'jeonju',  'name': '전주 한옥마을', 'lat': 35.8150, 'lng': 127.1530},
     {'id': 'yeongdo', 'name': '부산 영도',    'lat': 35.0780, 'lng': 129.0670},
   ];
@@ -39,17 +39,43 @@ class _HomeScreenState extends State<HomeScreen> {
     final spots = await _repo.fetchSpots(_regionId);
     setState(() {
       _spots = spots;
-      _activeIdx = 0;
+      _selectedSpot = null;
     });
-    _moveMap();
+    _moveToRegion();
+    if (_mapController != null) await _refreshMarkers();
   }
 
-  void _moveMap() {
+  void _moveToRegion() {
     final region = _regions.firstWhere((r) => r['id'] == _regionId);
-    _mapController.move(
-      LatLng(region['lat']! as double, region['lng']! as double),
-      14,
+    _mapController?.updateCamera(
+      NCameraUpdate.withParams(
+        target: NLatLng(region['lat']! as double, region['lng']! as double),
+        zoom: 14,
+      ),
     );
+  }
+
+  Future<void> _refreshMarkers() async {
+    if (_mapController == null) return;
+    await _mapController!.clearOverlays();
+    final markers = await _buildMarkers();
+    await _mapController!.addOverlayAll(markers);
+  }
+
+  Future<void> _moveToMyLocation() async {
+    final permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      await Geolocator.requestPermission();
+    }
+    try {
+      final pos = await Geolocator.getCurrentPosition();
+      _mapController?.updateCamera(
+        NCameraUpdate.withParams(
+          target: NLatLng(pos.latitude, pos.longitude),
+          zoom: 15,
+        ),
+      );
+    } catch (_) {}
   }
 
   void _selectRegion(String regionId) {
@@ -57,31 +83,76 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadSpots();
   }
 
+  void _selectSpot(StorySpot spot) {
+    setState(() => _selectedSpot = spot);
+    _refreshMarkers();
+  }
+
+  void _dismissCard() {
+    if (_selectedSpot == null) return;
+    setState(() => _selectedSpot = null);
+    _refreshMarkers();
+  }
+
+  Future<Set<NAddableOverlay>> _buildMarkers() async {
+    final markers = <NAddableOverlay>{};
+    for (final spot in _spots) {
+      final isActive = _selectedSpot?.id == spot.id;
+      final isCollected = _collectedIds.contains(spot.id);
+      final color = AppColors.forCategory(spot.category);
+      final glyph = AppColors.glyphForCategory(spot.category);
+      final size = isActive ? 48.0 : 36.0;
+
+      final icon = await NOverlayImage.fromWidget(
+        widget: _SpotMarker(
+          glyph: isCollected ? glyph : '?',
+          color: isCollected ? color : AppColors.surfaceAlt,
+          textColor: isCollected ? Colors.white : AppColors.inkMute,
+          isActive: isActive,
+          borderColor: color,
+        ),
+        size: Size(size, size),
+        context: context,
+      );
+
+      final marker = NMarker(
+        id: spot.id,
+        position: NLatLng(spot.lat, spot.lng),
+        icon: icon,
+      );
+      marker.setOnTapListener((_) => _selectSpot(spot));
+      markers.add(marker);
+    }
+    return markers;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final cur = _spots.isEmpty ? null : _spots[_activeIdx];
     final region = _regions.firstWhere((r) => r['id'] == _regionId);
 
     return Scaffold(
       body: Stack(
         children: [
-          // 지도 (full-bleed)
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: LatLng(
-                region['lat']! as double,
-                region['lng']! as double,
+          NaverMap(
+            options: NaverMapViewOptions(
+              initialCameraPosition: NCameraPosition(
+                target: NLatLng(
+                  region['lat']! as double,
+                  region['lng']! as double,
+                ),
+                zoom: 14,
               ),
-              initialZoom: 14,
+              minZoom: 6,
+              maxZoom: 20,
+              scaleBarEnable: false,
+              logoAlign: NLogoAlign.leftBottom,
             ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.dongne_dogam',
-              ),
-              MarkerLayer(markers: _buildMarkers()),
-            ],
+            onMapReady: (controller) async {
+              _mapController = controller;
+              final markers = await _buildMarkers();
+              await controller.addOverlayAll(markers);
+            },
+            onMapTapped: (_, _) => _dismissCard(),
           ),
 
           // 상단 floating: 지역명 + 수집 현황
@@ -110,45 +181,48 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          // 하단 카드 (FE-04에서 PageView 스와이프로 교체)
-          if (cur != null)
-            Positioned(
-              left: 16, right: 16, bottom: 32,
-              child: StoryCard(
-                spot: cur,
-                isCollected: _collectedIds.contains(cur.id),
-                inRange: false, // FE-05에서 실제 거리 연동
-                onTap: () {},
+          // 내 위치 버튼
+          Positioned(
+            right: 16,
+            bottom: _selectedSpot != null ? 220 : 40,
+            child: GestureDetector(
+              onTap: _moveToMyLocation,
+              child: Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.line),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.my_location, size: 20, color: AppColors.inkSub),
               ),
             ),
+          ),
+
+          // 하단 스토리 카드 (슬라이드 애니메이션)
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOutCubic,
+            left: 16, right: 16,
+            bottom: _selectedSpot != null ? 32 : -200,
+            child: _selectedSpot != null
+                ? StoryCard(
+                    spot: _selectedSpot!,
+                    isCollected: _collectedIds.contains(_selectedSpot!.id),
+                    inRange: false,
+                    onTap: () {},
+                  )
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
     );
-  }
-
-  List<Marker> _buildMarkers() {
-    return _spots.map((spot) {
-      final isActive = _spots[_activeIdx].id == spot.id;
-      final isCollected = _collectedIds.contains(spot.id);
-      final color = AppColors.forCategory(spot.category);
-      final glyph = AppColors.glyphForCategory(spot.category);
-
-      return Marker(
-        point: LatLng(spot.lat, spot.lng),
-        width: isActive ? 48 : 36,
-        height: isActive ? 48 : 36,
-        child: GestureDetector(
-          onTap: () => setState(() => _activeIdx = _spots.indexOf(spot)),
-          child: _SpotMarker(
-            glyph: isCollected ? glyph : '?',
-            color: isCollected ? color : AppColors.surfaceAlt,
-            textColor: isCollected ? Colors.white : AppColors.inkMute,
-            isActive: isActive,
-            borderColor: color,
-          ),
-        ),
-      );
-    }).toList();
   }
 }
 
@@ -271,11 +345,16 @@ class _RegionPill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 8),
-          Container(width: 40, height: 4,
-            decoration: BoxDecoration(color: AppColors.line, borderRadius: BorderRadius.circular(2))),
+          Container(
+            width: 40, height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.line, borderRadius: BorderRadius.circular(2),
+            ),
+          ),
           const SizedBox(height: 12),
           ...regions.map((r) => ListTile(
-            title: Text(r['name']! as String,
+            title: Text(
+              r['name']! as String,
               style: TextStyle(
                 fontWeight: r['id'] == selected ? FontWeight.w700 : FontWeight.normal,
                 color: r['id'] == selected ? AppColors.accent : AppColors.ink,

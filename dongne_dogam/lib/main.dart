@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_naver_map/flutter_naver_map.dart';
 
 import 'core/app_colors.dart';
 import 'features/home/home_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await FlutterNaverMap().init(
+    clientId: 'lgdhifazr2',
+  );
   runApp(const DogneDogamApp());
 }
 
