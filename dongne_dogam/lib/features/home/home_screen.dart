@@ -39,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // 인앱 알림 팝업
   StorySpot? _popupSpot;
   final Set<String> _notifiedIds = {};
+  bool _notifyResetFlash = false;
 
   static const _regions = [
     {'id': 'seongsu', 'name': '성수동',      'lat': 37.5446, 'lng': 127.0556},
@@ -364,15 +365,32 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(width: 8),
                       GestureDetector(
-                        onTap: () => setState(() => _notifiedIds.clear()),
-                        child: Container(
+                        onTap: () {
+                          setState(() {
+                            _notifiedIds.clear();
+                            _notifyResetFlash = true;
+                          });
+                          Future.delayed(const Duration(milliseconds: 600), () {
+                            if (mounted) setState(() => _notifyResetFlash = false);
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                           decoration: BoxDecoration(
-                            color: AppColors.surface.withValues(alpha: 0.92),
+                            color: _notifyResetFlash
+                                ? AppColors.accent
+                                : AppColors.surface.withValues(alpha: 0.92),
                             borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: AppColors.line),
+                            border: Border.all(
+                              color: _notifyResetFlash ? AppColors.accent : AppColors.line,
+                            ),
                           ),
-                          child: const Icon(Icons.notifications_active_outlined, size: 14, color: AppColors.inkSub),
+                          child: Icon(
+                            Icons.notifications_active_outlined,
+                            size: 14,
+                            color: _notifyResetFlash ? Colors.white : AppColors.inkSub,
+                          ),
                         ),
                       ),
                     ],
