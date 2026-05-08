@@ -3,11 +3,11 @@ import '../models/story_spot.dart';
 // 목록 API 응답 (StorySpotSummary)
 const mockSummaries = <String, List<StorySpotSummary>>{
   'seongsu': [
-    StorySpotSummary(id: 'ss01', name: '성수 수제화 거리', category: '산업문화', lat: 37.5446, lng: 127.0556, summary: '한때 수제화 장인들이 모여 있던 거리.'),
-    StorySpotSummary(id: 'ss02', name: '뚝섬 유원지 터',   category: '생활문화', lat: 37.5467, lng: 127.0647, summary: '서울 시민의 첫 물놀이장이 있던 자리.'),
+    StorySpotSummary(id: 'ss01', name: '성수 수제화 거리', category: '자연문화', lat: 37.5446, lng: 127.0556, summary: '한때 수제화 장인들이 모여 있던 거리.'),
+    StorySpotSummary(id: 'ss02', name: '뚝섬 유원지 터',   category: '예술문화', lat: 37.5467, lng: 127.0647, summary: '서울 시민의 첫 물놀이장이 있던 자리.'),
     StorySpotSummary(id: 'ss03', name: '연무장길',         category: '역사',    lat: 37.5430, lng: 127.0510, summary: '조선시대 군사들이 활을 쏘던 훈련장.'),
     StorySpotSummary(id: 'ss04', name: '옛 정수장 터',     category: '건축',    lat: 37.5480, lng: 127.0590, summary: '서울의 식수를 정화하던 산업 건축물.'),
-    StorySpotSummary(id: 'ss05', name: '성수 옛 공장지대', category: '산업문화', lat: 37.5420, lng: 127.0570, summary: '봉제·금속 공장이 빼곡했던 골목.'),
+    StorySpotSummary(id: 'ss05', name: '성수 옛 공장지대', category: '자연문화', lat: 37.5420, lng: 127.0570, summary: '봉제·금속 공장이 빼곡했던 골목.'),
   ],
   'jeonju': [
     StorySpotSummary(id: 'jj01', name: '경기전',         category: '역사',    lat: 35.8150, lng: 127.1530, summary: '태조 이성계의 어진을 모신 사당.'),
@@ -18,9 +18,9 @@ const mockSummaries = <String, List<StorySpotSummary>>{
   ],
   'yeongdo': [
     StorySpotSummary(id: 'yd01', name: '영도대교',          category: '건축',    lat: 35.0980, lng: 129.0320, summary: '한국 최초의 도개교.'),
-    StorySpotSummary(id: 'yd02', name: '흰여울 문화마을',   category: '생활문화', lat: 35.0820, lng: 129.0210, summary: '절벽에 매달린 피란민 마을.'),
+    StorySpotSummary(id: 'yd02', name: '흰여울 문화마을',   category: '예술문화', lat: 35.0820, lng: 129.0210, summary: '절벽에 매달린 피란민 마을.'),
     StorySpotSummary(id: 'yd03', name: '절영로 피란민촌 터', category: '역사',    lat: 35.0850, lng: 129.0250, summary: '전쟁기 임시 정착지였던 거리.'),
-    StorySpotSummary(id: 'yd04', name: '조선소 일대',       category: '산업문화', lat: 35.0900, lng: 129.0380, summary: '한국 조선업이 시작된 항구.'),
+    StorySpotSummary(id: 'yd04', name: '조선소 일대',       category: '자연문화', lat: 35.0900, lng: 129.0380, summary: '한국 조선업이 시작된 항구.'),
     StorySpotSummary(id: 'yd05', name: '봉수대',            category: '역사',    lat: 35.0780, lng: 129.0670, summary: '조선시대 통신 시설.'),
   ],
 };
@@ -28,7 +28,7 @@ const mockSummaries = <String, List<StorySpotSummary>>{
 // 상세 API 응답 (StorySpot) — spot_id 기준 조회
 const mockSpotDetails = <String, StorySpot>{
   'ss01': StorySpot(
-    id: 'ss01', name: '성수 수제화 거리', category: '산업문화',
+    id: 'ss01', name: '성수 수제화 거리', category: '자연문화',
     lat: 37.5446, lng: 127.0556, summary: '한때 수제화 장인들이 모여 있던 거리.',
     storyPast: '1970년대 성수동은 수제화 산업의 중심지였다. 좁은 골목마다 가죽 자르는 소리, 망치 두드리는 소리가 끊이지 않았다.',
     storyPresent: '대부분의 공방은 사라졌지만, 일부 장인들은 여전히 이 거리에서 손바느질로 구두를 만든다.',
@@ -36,7 +36,7 @@ const mockSpotDetails = <String, StorySpot>{
     keywords: ['수제화', '장인', '산업유산', '도시재생'],
   ),
   'ss02': StorySpot(
-    id: 'ss02', name: '뚝섬 유원지 터', category: '생활문화',
+    id: 'ss02', name: '뚝섬 유원지 터', category: '예술문화',
     lat: 37.5467, lng: 127.0647, summary: '서울 시민의 첫 물놀이장이 있던 자리.',
     storyPast: '1950년대부터 뚝섬은 서울 시민이 한강에서 멱을 감던 대표 유원지였다.',
     storyPresent: '한강공원으로 정비되어 오늘날 시민들의 산책로로 이용된다.',
@@ -60,7 +60,7 @@ const mockSpotDetails = <String, StorySpot>{
     keywords: ['근대건축', '인프라', '산업유산'],
   ),
   'ss05': StorySpot(
-    id: 'ss05', name: '성수 옛 공장지대', category: '산업문화',
+    id: 'ss05', name: '성수 옛 공장지대', category: '자연문화',
     lat: 37.5420, lng: 127.0570, summary: '봉제·금속 공장이 빼곡했던 골목.',
     storyPast: '1980년대까지 성수동은 봉제, 인쇄, 금속 가공 공장들이 빽빽하게 들어선 제조업 지대였다.',
     storyPresent: '많은 공장이 카페, 갤러리, 스타트업 사무실로 바뀌었다.',
@@ -116,7 +116,7 @@ const mockSpotDetails = <String, StorySpot>{
     keywords: ['도개교', '근대', '항만'],
   ),
   'yd02': StorySpot(
-    id: 'yd02', name: '흰여울 문화마을', category: '생활문화',
+    id: 'yd02', name: '흰여울 문화마을', category: '예술문화',
     lat: 35.0820, lng: 129.0210, summary: '절벽에 매달린 피란민 마을.',
     storyPast: '한국전쟁 시기 피란민이 영도 절벽에 집을 짓고 정착했다.',
     storyPresent: '바다가 보이는 좁은 골목길이 영화 촬영지로 유명해졌다.',
@@ -132,7 +132,7 @@ const mockSpotDetails = <String, StorySpot>{
     keywords: ['피란', '도시사', '재개발'],
   ),
   'yd04': StorySpot(
-    id: 'yd04', name: '조선소 일대', category: '산업문화',
+    id: 'yd04', name: '조선소 일대', category: '자연문화',
     lat: 35.0900, lng: 129.0380, summary: '한국 조선업이 시작된 항구.',
     storyPast: '일제강점기부터 영도에는 크고 작은 조선소가 자리잡았다.',
     storyPresent: '여전히 조선 관련 산업이 일부 운영되며 항구의 풍경을 만든다.',
