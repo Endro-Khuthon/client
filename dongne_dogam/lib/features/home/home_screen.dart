@@ -255,7 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // 내 위치 버튼
           Positioned(
             right: 16,
-            bottom: _selectedSpot != null ? 220 : 40,
+            bottom: _selectedSpot != null ? 312 : 108,
             child: GestureDetector(
               onTap: _moveToMyLocation,
               child: Container(
@@ -281,7 +281,7 @@ class _HomeScreenState extends State<HomeScreen> {
             duration: const Duration(milliseconds: 280),
             curve: Curves.easeOutCubic,
             left: 16, right: 16,
-            bottom: _selectedSpot != null ? 32 : -200,
+            bottom: _selectedSpot != null ? 100 : -200,
             child: _selectedSpot != null
                 ? StoryCard(
                     spot: _selectedSpot!,
