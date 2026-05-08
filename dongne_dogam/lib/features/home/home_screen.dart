@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../core/app_colors.dart';
 import '../../data/models/story_spot.dart';
 import '../../data/repositories/spot_repository.dart';
+import 'widgets/notification_popup.dart';
 import 'widgets/story_card.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -34,6 +35,11 @@ class _HomeScreenState extends State<HomeScreen> {
   // 데모용 위치 설정
   NLatLng? _mockPosition;
   bool _locationPickMode = false;
+
+  // 인앱 알림 팝업
+  StorySpot? _popupSpot;
+  final Set<String> _notifiedIds = {};
+  bool _notifyResetFlash = false;
 
   static const _regions = [
     {'id': 'seongsu', 'name': '성수동',      'lat': 37.5446, 'lng': 127.0556},
@@ -72,20 +78,42 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onPositionUpdate(Position pos) {
-    if (_mockPosition != null) return; // 데모 모드 중엔 GPS 무시
+    if (_mockPosition != null) return;
+    _updateInRange(pos.latitude, pos.longitude);
+  }
+
+  void _updateInRange(double lat, double lng) {
     final newInRange = <String>{};
     for (final spot in _spots) {
-      final dist = Geolocator.distanceBetween(
-        pos.latitude, pos.longitude,
-        spot.lat, spot.lng,
-      );
+      final dist = Geolocator.distanceBetween(lat, lng, spot.lat, spot.lng);
       if (dist <= _rangeMeters) newInRange.add(spot.id);
     }
-    if (newInRange != _inRangeIds) {
-      setState(() => _inRangeIds
+    if (newInRange == _inRangeIds) return;
+
+    setState(() {
+      _inRangeIds
         ..clear()
-        ..addAll(newInRange));
+        ..addAll(newInRange);
+    });
+    _triggerPopupIfNeeded(lat, lng);
+  }
+
+  void _triggerPopupIfNeeded(double lat, double lng) {
+    // 이미 알림을 보낸 적 없는 스팟 중 가장 가까운 것 선택
+    StorySpot? closest;
+    double minDist = double.infinity;
+    for (final spot in _spots) {
+      if (!_inRangeIds.contains(spot.id)) continue;
+      if (_notifiedIds.contains(spot.id)) continue;
+      final dist = Geolocator.distanceBetween(lat, lng, spot.lat, spot.lng);
+      if (dist < minDist) {
+        minDist = dist;
+        closest = spot;
+      }
     }
+    if (closest == null) return;
+    _notifiedIds.add(closest.id);
+    setState(() => _popupSpot = closest);
   }
 
   Future<void> _loadSpots() async {
@@ -192,21 +220,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onMapTapped(NPoint point, NLatLng coord) {
     if (_locationPickMode) {
-      final newInRange = <String>{};
-      for (final spot in _spots) {
-        final dist = Geolocator.distanceBetween(
-          coord.latitude, coord.longitude,
-          spot.lat, spot.lng,
-        );
-        if (dist <= _rangeMeters) newInRange.add(spot.id);
-      }
       setState(() {
         _mockPosition = coord;
         _locationPickMode = false;
-        _inRangeIds
-          ..clear()
-          ..addAll(newInRange);
       });
+      _updateInRange(coord.latitude, coord.longitude);
       _mapController?.updateCamera(
         NCameraUpdate.withParams(target: coord, zoom: 15),
       );
@@ -333,14 +351,49 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
-                  _GlassPill(
-                    child: Text(
-                      '${_collectedIds.length}/${_spots.length}',
-                      style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w600,
-                        color: AppColors.ink,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _GlassPill(
+                        child: Text(
+                          '${_collectedIds.length}/${_spots.length}',
+                          style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w600,
+                            color: AppColors.ink,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _notifiedIds.clear();
+                            _notifyResetFlash = true;
+                          });
+                          Future.delayed(const Duration(milliseconds: 600), () {
+                            if (mounted) setState(() => _notifyResetFlash = false);
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: _notifyResetFlash
+                                ? AppColors.accent
+                                : AppColors.surface.withValues(alpha: 0.92),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: _notifyResetFlash ? AppColors.accent : AppColors.line,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.notifications_active_outlined,
+                            size: 14,
+                            color: _notifyResetFlash ? Colors.white : AppColors.inkSub,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -370,6 +423,17 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+
+          // 인앱 알림 팝업
+          if (_popupSpot != null)
+            Positioned(
+              top: 0, left: 0, right: 0,
+              child: NotificationPopup(
+                spot: _popupSpot!,
+                onTap: () => setState(() => _popupSpot = null),
+                onDismiss: () => setState(() => _popupSpot = null),
+              ),
+            ),
 
           // 하단 스토리 카드 (슬라이드 애니메이션)
           AnimatedPositioned(
