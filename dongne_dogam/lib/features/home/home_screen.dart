@@ -144,14 +144,20 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _refreshMarkers() async {
+  Future<void> _refreshMarkers({Set<String>? onlyIds}) async {
     if (_mapController == null) return;
-    await _mapController!.clearOverlays();
-    final overlays = await _buildMarkers();
-    if (_mockPosition != null) {
-      overlays.addAll(_buildLocationOverlays(_mockPosition!));
+    if (onlyIds != null) {
+      // 지정된 마커만 교체
+      final overlays = await _buildMarkers(onlyIds: onlyIds);
+      await _mapController!.addOverlayAll(overlays);
+    } else {
+      await _mapController!.clearOverlays();
+      final overlays = await _buildMarkers();
+      if (_mockPosition != null) {
+        overlays.addAll(_buildLocationOverlays(_mockPosition!));
+      }
+      await _mapController!.addOverlayAll(overlays);
     }
-    await _mapController!.addOverlayAll(overlays);
   }
 
   Set<NAddableOverlay> _buildLocationOverlays(NLatLng pos) {
@@ -232,20 +238,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _selectSpot(StorySpotSummary spot) {
-    setState(() {
-      _selectedSpot = spot;
-      _markerIconCache.clear();
-    });
-    _refreshMarkers();
+    final prev = _selectedSpot;
+    setState(() => _selectedSpot = spot);
+    final changedIds = {spot.id, if (prev != null) prev.id};
+    for (final id in changedIds) {
+      _markerIconCache.removeWhere((k, _) => k.startsWith('${id}_'));
+    }
+    _refreshMarkers(onlyIds: changedIds);
   }
 
   void _dismissCard() {
     if (_selectedSpot == null) return;
-    setState(() {
-      _selectedSpot = null;
-      _markerIconCache.clear();
-    });
-    _refreshMarkers();
+    final prev = _selectedSpot!;
+    setState(() => _selectedSpot = null);
+    _markerIconCache.removeWhere((k, _) => k.startsWith('${prev.id}_'));
+    _refreshMarkers(onlyIds: {prev.id});
   }
 
   void _toggleLocationPickMode() {
@@ -268,9 +275,11 @@ class _HomeScreenState extends State<HomeScreen> {
     _dismissCard();
   }
 
-  Future<Set<NAddableOverlay>> _buildMarkers() async {
-    // 모든 이미지 미리 로드
-    await Future.wait(_spots.map((spot) async {
+  Future<Set<NAddableOverlay>> _buildMarkers({Set<String>? onlyIds}) async {
+    final targets = onlyIds == null ? _spots : _spots.where((s) => onlyIds.contains(s.id)).toList();
+
+    // 대상 이미지 미리 로드
+    await Future.wait(targets.map((spot) async {
       if (spot.imageUrl.isNotEmpty && mounted) {
         try {
           await precacheImage(NetworkImage(spot.imageUrl), context);
@@ -279,7 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }));
 
     final markers = <NAddableOverlay>{};
-    for (final spot in _spots) {
+    for (final spot in targets) {
       final isActive = _selectedSpot?.id == spot.id;
       final isCollected = _collectedIds.contains(spot.id);
       final color = AppColors.forCategory(spot.category);
