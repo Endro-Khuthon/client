@@ -22,6 +22,8 @@ class _HomeScreenState extends State<HomeScreen> {
   List<StorySpot> _spots = [];
   StorySpot? _selectedSpot;
   final Set<String> _collectedIds = {};
+  // 마커 이미지 캐시: '${spotId}_${isActive}_${isCollected}' → NOverlayImage
+  final Map<String, NOverlayImage> _markerIconCache = {};
 
   static const _regions = [
     {'id': 'seongsu', 'name': '성수동',      'lat': 37.5446, 'lng': 127.0556},
@@ -40,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _spots = spots;
       _selectedSpot = null;
+      _markerIconCache.clear();
     });
     _moveToRegion();
     if (_mapController != null) await _refreshMarkers();
@@ -63,9 +66,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _moveToMyLocation() async {
-    final permission = await Geolocator.checkPermission();
+    var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
-      await Geolocator.requestPermission();
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.deniedForever ||
+        permission == LocationPermission.denied) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('위치 권한이 필요합니다. 설정에서 허용해주세요.')),
+        );
+      }
+      return;
     }
     try {
       final pos = await Geolocator.getCurrentPosition();
@@ -75,7 +87,13 @@ class _HomeScreenState extends State<HomeScreen> {
           zoom: 15,
         ),
       );
-    } catch (_) {}
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('현재 위치를 가져올 수 없습니다.')),
+        );
+      }
+    }
   }
 
   void _selectRegion(String regionId) {
@@ -103,7 +121,8 @@ class _HomeScreenState extends State<HomeScreen> {
       final glyph = AppColors.glyphForCategory(spot.category);
       final size = isActive ? 48.0 : 36.0;
 
-      final icon = await NOverlayImage.fromWidget(
+      final cacheKey = '${spot.id}_${isActive}_$isCollected';
+      final icon = _markerIconCache[cacheKey] ?? await NOverlayImage.fromWidget(
         widget: _SpotMarker(
           glyph: isCollected ? glyph : '?',
           color: isCollected ? color : AppColors.surfaceAlt,
@@ -114,6 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
         size: Size(size, size),
         context: context,
       );
+      _markerIconCache[cacheKey] = icon;
 
       final marker = NMarker(
         id: spot.id,
