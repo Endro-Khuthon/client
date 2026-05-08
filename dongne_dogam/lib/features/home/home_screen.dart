@@ -24,14 +24,16 @@ class _HomeScreenState extends State<HomeScreen> {
   List<StorySpot> _spots = [];
   StorySpot? _selectedSpot;
   final Set<String> _collectedIds = {};
-  // 마커 이미지 캐시: '${spotId}_${isActive}_${isCollected}' → NOverlayImage
   final Map<String, NOverlayImage> _markerIconCache = {};
 
-  // 1km 이내 스팟 ID 집합 (FE-07 알림 연동용)
+  // 실시간 GPS
   final Set<String> _inRangeIds = {};
   StreamSubscription<Position>? _positionSub;
-
   static const _rangeMeters = 1000.0;
+
+  // 데모용 위치 설정
+  NLatLng? _mockPosition;
+  bool _locationPickMode = false;
 
   static const _regions = [
     {'id': 'seongsu', 'name': '성수동',      'lat': 37.5446, 'lng': 127.0556},
@@ -61,16 +63,16 @@ class _HomeScreenState extends State<HomeScreen> {
         permission == LocationPermission.deniedForever) {
       return;
     }
-
     _positionSub = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 20, // 20m 이상 이동 시에만 업데이트
+        distanceFilter: 20,
       ),
     ).listen(_onPositionUpdate);
   }
 
   void _onPositionUpdate(Position pos) {
+    if (_mockPosition != null) return; // 데모 모드 중엔 GPS 무시
     final newInRange = <String>{};
     for (final spot in _spots) {
       final dist = Geolocator.distanceBetween(
@@ -79,8 +81,6 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       if (dist <= _rangeMeters) newInRange.add(spot.id);
     }
-
-    // 새로 범위 안에 들어온 스팟만 setState (불필요한 리빌드 방지)
     if (newInRange != _inRangeIds) {
       setState(() => _inRangeIds
         ..clear()
@@ -112,8 +112,31 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _refreshMarkers() async {
     if (_mapController == null) return;
     await _mapController!.clearOverlays();
-    final markers = await _buildMarkers();
-    await _mapController!.addOverlayAll(markers);
+    final overlays = await _buildMarkers();
+    if (_mockPosition != null) {
+      overlays.addAll(_buildLocationOverlays(_mockPosition!));
+    }
+    await _mapController!.addOverlayAll(overlays);
+  }
+
+  Set<NAddableOverlay> _buildLocationOverlays(NLatLng pos) {
+    final circle = NCircleOverlay(
+      id: '__range_circle',
+      center: pos,
+      radius: 1000,
+      color: AppColors.accent.withValues(alpha: 0.08),
+      outlineColor: AppColors.accent.withValues(alpha: 0.35),
+      outlineWidth: 1.5,
+    );
+    final dot = NCircleOverlay(
+      id: '__my_location',
+      center: pos,
+      radius: 18,
+      color: AppColors.accent.withValues(alpha: 0.9),
+      outlineColor: Colors.white,
+      outlineWidth: 2.5,
+    );
+    return {circle, dot};
   }
 
   Future<void> _moveToMyLocation() async {
@@ -161,6 +184,36 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_selectedSpot == null) return;
     setState(() => _selectedSpot = null);
     _refreshMarkers();
+  }
+
+  void _toggleLocationPickMode() {
+    setState(() => _locationPickMode = !_locationPickMode);
+  }
+
+  void _onMapTapped(NPoint point, NLatLng coord) {
+    if (_locationPickMode) {
+      final newInRange = <String>{};
+      for (final spot in _spots) {
+        final dist = Geolocator.distanceBetween(
+          coord.latitude, coord.longitude,
+          spot.lat, spot.lng,
+        );
+        if (dist <= _rangeMeters) newInRange.add(spot.id);
+      }
+      setState(() {
+        _mockPosition = coord;
+        _locationPickMode = false;
+        _inRangeIds
+          ..clear()
+          ..addAll(newInRange);
+      });
+      _mapController?.updateCamera(
+        NCameraUpdate.withParams(target: coord, zoom: 15),
+      );
+      _refreshMarkers();
+      return;
+    }
+    _dismissCard();
   }
 
   Future<Set<NAddableOverlay>> _buildMarkers() async {
@@ -223,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
               final markers = await _buildMarkers();
               await controller.addOverlayAll(markers);
             },
-            onMapTapped: (_, _) => _dismissCard(),
+            onMapTapped: _onMapTapped,
           ),
 
           // 상단 floating: 지역명 + 수집 현황
@@ -232,11 +285,53 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _RegionPill(
-                    regions: _regions,
-                    selected: _regionId,
-                    onSelect: _selectRegion,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _RegionPill(
+                        regions: _regions,
+                        selected: _regionId,
+                        onSelect: _selectRegion,
+                      ),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: _toggleLocationPickMode,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: _locationPickMode
+                                ? AppColors.accent
+                                : AppColors.surface.withValues(alpha: 0.92),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: _locationPickMode ? AppColors.accent : AppColors.line,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _locationPickMode ? Icons.close : Icons.location_on_outlined,
+                                size: 13,
+                                color: _locationPickMode ? Colors.white : AppColors.inkSub,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                _locationPickMode ? '위치 선택 중... 취소' : '내 위치 설정',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: _locationPickMode ? Colors.white : AppColors.inkSub,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   _GlassPill(
                     child: Text(
